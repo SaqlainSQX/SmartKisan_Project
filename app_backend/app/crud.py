@@ -7,8 +7,18 @@ def get_user_by_username(db: Session, username: str):
 
 def create_user(db: Session, user: schemas.UserCreate):
     """Creates a new user in the database."""
-    hashed_password = auth.get_password_hash(user.password)
+    
+    # --- THIS IS THE FIX ---
+    # Encode the password to UTF-8 bytes, THEN truncate at 72 bytes.
+    # This prevents the "password cannot be longer than 72 bytes" error.
+    safe_password_bytes = user.password.encode('utf-8')[:72]
+    
+    # Use the 'safe_password_bytes' variable here
+    # passlib's hash function can accept bytes directly.
+    hashed_password = auth.get_password_hash(safe_password_bytes)
     db_user = models.User(username=user.username, hashed_password=hashed_password)
+
+    # Add, commit, and refresh the user
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
