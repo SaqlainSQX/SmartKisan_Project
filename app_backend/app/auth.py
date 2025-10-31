@@ -21,7 +21,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def verify_password(plain_password, hashed_password):
     """Verifies a plain password against a hashed one."""
-    return pwd_context.verify(plain_password, hashed_password)
+    safe_password_bytes = plain_password.encode('utf-8')[:72]
+    return pwd_context.verify(safe_password_bytes, hashed_password)
 
 def get_password_hash(password):
     """Hashes a plain password."""
