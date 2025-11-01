@@ -8,7 +8,7 @@ import json
 # In your terminal: set GEMINI_API_KEY=YOUR_API_KEY
 try:
     # Use the environment variable for security
-    GEMINI_API_KEY = "AIzaSyClTNCjG0C9m35kUNuv6ct2lPwlXY4MIUg" #os.environ["GEMINI_API_KEY"]
+    GEMINI_API_KEY = "" #os.environ["GEMINI_API_KEY"]
     genai.configure(api_key=GEMINI_API_KEY)
 except KeyError:
     print("="*50)
