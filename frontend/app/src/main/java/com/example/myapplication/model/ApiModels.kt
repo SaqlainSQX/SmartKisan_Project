@@ -21,3 +21,13 @@ data class UserCreate(
     val username: String,
     val password: String
 )
+
+// Add this data class to your existing ApiModels.kt file
+
+data class DiseasePredictionResponse(
+    @SerializedName("disease_name")
+    val diseaseName: String,
+    val confidence: Double,
+    val description: String,
+    val solution: String
+)

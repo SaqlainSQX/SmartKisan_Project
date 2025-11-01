@@ -5,3 +5,7 @@ psycopg2-binary
 pydantic[email]
 passlib[bcrypt]
 python-jose[cryptography]
+tensorflow
+tensorflow-datasets
+Pillow
+google-generativeai

@@ -3,12 +3,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 
-from . import crud, models, schemas, auth, database
+from . import crud, models, schemas, auth, database,disease_router
 
 # Create all database tables (on startup)
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
+
+app.include_router(disease_router.router)
 
 @app.post("/register", status_code=status.HTTP_201_CREATED)
 def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
