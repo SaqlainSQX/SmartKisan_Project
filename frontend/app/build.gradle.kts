@@ -76,4 +76,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
+    // Make sure to use the same version as your other Material 3 libraries
+    implementation("androidx.compose.material:material-icons-extended")
+
 }
