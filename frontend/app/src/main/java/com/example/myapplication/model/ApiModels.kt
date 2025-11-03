@@ -1,4 +1,4 @@
-
+// G:\SmartKisan_Project\frontend\app\src\main\java\com\example\myapplication\model\ApiModels.kt
 package com.example.myapplication.model
 
 import com.google.gson.annotations.SerializedName
@@ -11,19 +11,7 @@ data class TokenResponse(
     val tokenType: String
 )
 
-// Response from the /register endpoint
-data class RegisterResponse(
-    val message: String
-)
-
-// Data class to send as the body for /register
-data class UserCreate(
-    val username: String,
-    val password: String
-)
-
-// Add this data class to your existing ApiModels.kt file
-
+// Response from /disease/predict endpoint
 data class DiseasePredictionResponse(
     @SerializedName("disease_name")
     val diseaseName: String,
@@ -32,9 +20,7 @@ data class DiseasePredictionResponse(
     val solution: String
 )
 
-
-// Add these to your ApiModels.kt file
-
+// Data class for Chat History
 data class ChatMessage(
     val id: Int,
     val user_id: Int,
@@ -43,6 +29,27 @@ data class ChatMessage(
     val timestamp: String
 )
 
+// Data class for sending a chat message
 data class ChatRequest(
+    val message: String
+)
+
+// --- DATA CLASSES FOR FORGOT PASSWORD ---
+
+// --- THIS IS THE NEW CLASS ---
+// Data class for sending the forgot password request
+data class ForgotPasswordRequest(
+    val email: String
+)
+
+// Data class for sending the reset password request
+data class ResetPasswordRequest(
+    val email: String,
+    val otp: String,
+    val new_password: String
+)
+
+// Data class for a generic success/error message
+data class MessageResponse(
     val message: String
 )

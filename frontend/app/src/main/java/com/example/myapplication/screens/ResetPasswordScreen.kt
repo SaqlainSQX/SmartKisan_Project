@@ -1,9 +1,9 @@
 package com.example.myapplication.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -12,7 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -22,31 +22,39 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.myapplication.viewmodel.AuthEvent
 import com.example.myapplication.viewmodel.AuthViewModel
+import com.example.myapplication.viewmodel.ResetState
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+fun ResetPasswordScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel = viewModel(),
+    email: String // Passed from navigation
+) {
+    var otp by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf<String?>(null) }
 
-    val isLoading by authViewModel.isLoading.collectAsState()
-    val error by authViewModel.error.collectAsState()
-    val focusManager = LocalFocusManager.current
+    val resetState by authViewModel.resetState.collectAsState()
+    val context = LocalContext.current
 
-    // Clear errors when the screen is entered
+    // Clear state when the screen is entered
     LaunchedEffect(Unit) {
-        authViewModel.clearError()
+        authViewModel.clearResetState()
     }
 
-    // Listen for registration success
+    // Listen for final success event
     LaunchedEffect(Unit) {
         authViewModel.authEvent.collectLatest { event ->
-            if (event == com.example.myapplication.viewmodel.AuthEvent.REGISTER_SUCCESS) {
-                // Navigate back to login screen after successful registration
-                navController.popBackStack()
+            if (event == AuthEvent.RESET_PASSWORD_SUCCESS) {
+                Toast.makeText(context, "Password reset! You can now log in.", Toast.LENGTH_LONG).show()
+                // Navigate back to login and clear the stack
+                navController.navigate("login") {
+                    popUpTo("login") { inclusive = true }
+                }
             }
         }
     }
@@ -54,7 +62,7 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Account") },
+                title = { Text("Enter New Password") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -66,43 +74,49 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // --- FIX: Removed the "to - " typo ---
                 .padding(paddingValues)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "Create your Account",
-                style = MaterialTheme.typography.headlineLarge,
+                "Check your Email",
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            Text(
+                "We sent an OTP to $email. Please enter it below.",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
-            // --- Email Field ---
+            // --- OTP Field ---
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
+                value = otp,
+                onValueChange = { if (it.length <= 6) otp = it },
+                label = { Text("6-Digit OTP") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
+                    keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
                 singleLine = true
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- Password Field ---
+            // --- New Password Field ---
             OutlinedTextField(
-                value = password,
+                value = newPassword,
                 onValueChange = {
-                    password = it
-                    // Client-side validation
+                    newPassword = it
                     passwordError = if (it.length < 8) "Password must be at least 8 characters" else null
                 },
-                label = { Text("Password") },
+                label = { Text("New Password") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 visualTransformation = PasswordVisualTransformation(),
@@ -110,14 +124,8 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
                 ),
-                keyboardActions = KeyboardActions(onDone = {
-                    focusManager.clearFocus()
-                    if (passwordError == null) {
-                        authViewModel.register(email, password)
-                    }
-                }),
                 singleLine = true,
-                isError = passwordError != null || error != null,
+                isError = passwordError != null,
                 supportingText = {
                     if (passwordError != null) {
                         Text(passwordError!!, color = MaterialTheme.colorScheme.error)
@@ -126,36 +134,35 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel = 
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- Error Message (from backend) ---
-            if (error != null) {
+            // --- Error Message ---
+            if (resetState is ResetState.Error) {
                 Text(
-                    text = error!!,
+                    text = (resetState as ResetState.Error).message,
                     color = MaterialTheme.colorScheme.error,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
 
-            // --- Register Button ---
+            // --- Reset Password Button ---
             Button(
                 onClick = {
-                    focusManager.clearFocus()
                     if (passwordError == null) {
-                        authViewModel.register(email, password)
+                        authViewModel.resetPassword(email, otp, newPassword)
                     }
                 },
-                enabled = !isLoading && passwordError == null,
+                enabled = resetState !is ResetState.Loading && passwordError == null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                if (isLoading) {
+                if (resetState is ResetState.Loading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Register", fontSize = 16.sp)
+                    Text("Reset Password", fontSize = 16.sp)
                 }
             }
         }
