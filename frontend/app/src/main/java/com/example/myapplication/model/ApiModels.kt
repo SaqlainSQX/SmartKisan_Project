@@ -31,3 +31,18 @@ data class DiseasePredictionResponse(
     val description: String,
     val solution: String
 )
+
+
+// Add these to your ApiModels.kt file
+
+data class ChatMessage(
+    val id: Int,
+    val user_id: Int,
+    val role: String, // "user" or "model"
+    val content: String,
+    val timestamp: String
+)
+
+data class ChatRequest(
+    val message: String
+)

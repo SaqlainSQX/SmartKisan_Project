@@ -8,7 +8,7 @@ import json
 # In your terminal: set GEMINI_API_KEY=YOUR_API_KEY
 try:
     # Use the environment variable for security
-    GEMINI_API_KEY = "" #os.environ["GEMINI_API_KEY"]
+    GEMINI_API_KEY = "AIzaSyClTNCjG0C9m35kUNuv6ct2lPwlXY4MIUg" #os.environ["GEMINI_API_KEY"]
     genai.configure(api_key=GEMINI_API_KEY)
 except KeyError:
     print("="*50)
@@ -74,3 +74,38 @@ def get_disease_solution(disease_name: str) -> dict:
             "description": "Could not fetch detailed information.",
             "solution": f"An error occurred while contacting the AI assistant: {e}"
         }
+    
+
+
+
+
+
+def get_chatbot_response(disease_name: str) -> dict:
+    # This is a placeholder for your chatbot logic
+    # You can expand this to take history as an argument
+    
+    if not GEMINI_API_KEY:
+        return { "role": "model", "content": "Gemini API key not configured." }
+
+    try:
+        # Give the chatbot a "persona"
+        system_prompt = (
+            "You are SmartKisaan, a friendly and helpful AI assistant for farmers. "
+            "You provide clear, concise, and practical advice on agriculture, crop management, "
+            "and pest control. Your tone is supportive and easy to understand."
+        )
+        
+        # For simplicity, we are not sending full history yet.
+        # We can add that later by passing in the history list.
+        model = genai.GenerativeModel(
+            model_name='gemini-2.5-flash-preview-09-2025',
+            system_instruction=system_prompt
+        )
+        
+        response = model.generate_content(disease_name) # 'disease_name' is just the user's message
+        
+        return { "role": "model", "content": response.text }
+        
+    except Exception as e:
+        print(f"Error calling Gemini API: {e}")
+        return { "role": "model", "content": f"Sorry, I had trouble connecting to the AI: {e}" }

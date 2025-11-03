@@ -21,3 +21,25 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+
+def get_chat_history(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+    """Fetches chat history for a specific user, most recent first."""
+    return db.query(models.ChatMessage)\
+             .filter(models.ChatMessage.user_id == user_id)\
+             .order_by(models.ChatMessage.timestamp.desc())\
+             .offset(skip)\
+             .limit(limit)\
+             .all()
+
+def create_chat_message(db: Session, user_id: int, message: schemas.ChatMessageCreate):
+    """Saves a new chat message to the database."""
+    db_message = models.ChatMessage(
+        user_id=user_id,
+        role=message.role,
+        content=message.content
+    )
+    db.add(db_message)
+    db.commit()
+    db.refresh(db_message)
+    return db_message
