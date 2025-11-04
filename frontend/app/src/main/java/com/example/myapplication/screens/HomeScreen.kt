@@ -1,3 +1,4 @@
+// G:\SmartKisan_Project\frontend\app\src\main\java\com\example\myapplication\screens\HomeScreen.kt
 package com.example.myapplication.screens
 
 import androidx.compose.foundation.Image
@@ -9,10 +10,15 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Chat // For DashboardItem
+import androidx.compose.material.icons.filled.Groups // For DashboardItem
+import androidx.compose.material.icons.filled.LocalFlorist // For DashboardItem
+import androidx.compose.material.icons.filled.Storefront // For DashboardItem
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -30,18 +37,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.myapplication.R
 import com.example.myapplication.viewmodel.AuthEvent
 import com.example.myapplication.viewmodel.AuthViewModel
-// --- Import the new Weather VM and State ---
 import com.example.myapplication.viewmodel.WeatherViewModel
 import com.example.myapplication.viewmodel.WeatherUiState
 import com.example.myapplication.viewmodel.WeatherData
 import com.example.myapplication.viewmodel.ForecastItem
 import com.example.myapplication.viewmodel.RoughWeatherWarning
 import kotlinx.coroutines.flow.collectLatest
+// --- FIX: Ensure the correct UserResponse is imported ---
+import com.example.myapplication.model.UserResponse
 
-// --- Dashboard Item Data ---
+
 data class DashboardItem(
     val title: String,
     val icon: ImageVector,
@@ -61,15 +70,22 @@ val dashboardItems = listOf(
 fun HomeScreen(
     navController: NavController,
     authViewModel: AuthViewModel = viewModel(),
-    // --- Add the Weather ViewModel ---
     weatherViewModel: WeatherViewModel = viewModel()
 ) {
 
-    // --- Observe Weather State ---
     val weatherState by weatherViewModel.uiState.collectAsState()
 
-    // --- YOUR EXISTING LOGOUT LOGIC ---
-    // (This is preserved from your file)
+    // --- THIS IS THE FIX ---
+    // We are explicitly telling the compiler that 'profileState'
+    // is of type 'UserResponse?' (or null).
+    val profileState: UserResponse? by authViewModel.profileState.collectAsState()
+    // --- END FIX ---
+
+    // This line will now work because 'profileState' is guaranteed to be a UserResponse
+    val welcomeMessage = profileState?.name?.let {
+        if(it.isNotEmpty()) "Welcome, $it" else "Welcome!"
+    } ?: "Welcome!"
+
     LaunchedEffect(Unit) {
         authViewModel.authEvent.collectLatest { event ->
             if (event == AuthEvent.LOGOUT_SUCCESS) {
@@ -83,9 +99,23 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("SmartKisaan", fontWeight = FontWeight.Bold) },
+                title = { Text(welcomeMessage, fontWeight = FontWeight.Bold) },
                 actions = {
-                    // --- YOUR LOGOUT BUTTON (MOVED) ---
+                    IconButton(onClick = { navController.navigate("profile") }) {
+                        if (profileState?.profile_photo_url != null) {
+                            AsyncImage(
+                                model = "http://10.0.2.2:8000" + profileState!!.profile_photo_url,
+                                contentDescription = "Profile",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                            )
+                        } else {
+                            Icon(Icons.Filled.AccountCircle, contentDescription = "Profile")
+                        }
+                    }
+
                     IconButton(onClick = { authViewModel.logout() }) {
                         Icon(Icons.Filled.Logout, contentDescription = "Log Out")
                     }
@@ -104,11 +134,10 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
         ) {
 
-            // --- 1. Weather Section (with State Handling) ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(280.dp), // Give a fixed height to prevent jumps
+                    .height(280.dp),
                 contentAlignment = Alignment.Center
             ) {
                 when (val state = weatherState) {
@@ -124,7 +153,6 @@ fun HomeScreen(
                         )
                     }
                     is WeatherUiState.Success -> {
-                        // Weather Card
                         WeatherCard(
                             weather = state.weatherData,
                             forecast = state.forecastList
@@ -133,14 +161,11 @@ fun HomeScreen(
                 }
             }
 
-            // --- Rough Weather Warning (with State Handling) ---
             if (weatherState is WeatherUiState.Success) {
                 val warning = (weatherState as WeatherUiState.Success).warning
                 RoughWeatherWarning(warning)
             }
 
-
-            // --- 2. Middle Section (4 Features) ---
             Text(
                 "Features",
                 style = MaterialTheme.typography.titleLarge,
@@ -152,12 +177,10 @@ fun HomeScreen(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier
                     .fillMaxWidth()
-                    // .heightIn(min = 300.dp), // <-- THIS IS THE PROBLEM
-                    .height(350.dp), // <-- THIS IS THE FIX
+                    .height(350.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(bottom = 16.dp),
-                // This is correct, keep it!
                 userScrollEnabled = false
             ) {
                 items(dashboardItems) { item ->
@@ -178,7 +201,7 @@ fun WeatherCard(weather: WeatherData, forecast: List<ForecastItem>) {
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth() // Changed from fillMaxSize
+                .fillMaxWidth()
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
@@ -226,7 +249,6 @@ fun WeatherCard(weather: WeatherData, forecast: List<ForecastItem>) {
                     modifier = Modifier.padding(vertical = 20.dp)
                 )
 
-                // 5-Day Forecast
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
@@ -299,7 +321,7 @@ fun RoughWeatherWarning(warning: RoughWeatherWarning) {
 fun FeatureCard(item: DashboardItem, onClick: () -> Unit) {
     Card(
         modifier = Modifier
-            .aspectRatio(1f) // Makes the card square
+            .aspectRatio(1f)
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(4.dp),
         shape = RoundedCornerShape(16.dp),

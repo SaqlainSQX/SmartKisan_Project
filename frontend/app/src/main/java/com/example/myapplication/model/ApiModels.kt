@@ -34,9 +34,6 @@ data class ChatRequest(
     val message: String
 )
 
-// --- DATA CLASSES FOR FORGOT PASSWORD ---
-
-// --- THIS IS THE NEW CLASS ---
 // Data class for sending the forgot password request
 data class ForgotPasswordRequest(
     val email: String
@@ -53,3 +50,20 @@ data class ResetPasswordRequest(
 data class MessageResponse(
     val message: String
 )
+
+// --- THIS IS THE FIX (PART 1) ---
+// Data class for updating the user's profile
+data class ProfileUpdate(
+    val name: String,
+    val contact_number: String
+)
+
+// Data class for receiving the user's profile data
+data class UserResponse(
+    val id: Int,
+    val email: String,
+    val name: String?,
+    val contact_number: String?,
+    val profile_photo_url: String?
+)
+// --- END FIX ---

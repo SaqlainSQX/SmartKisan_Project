@@ -1,6 +1,8 @@
+// G:\SmartKisan_Project\frontend\app\src\main\java\com\example\myapplication\network\ChatbotApiClient.kt
 package com.example.myapplication.network
 
 import android.content.Context
+import com.example.myapplication.BuildConfig
 import com.example.myapplication.datastore.AuthDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -9,16 +11,14 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit // <-- NEW IMPORT
 
 object ChatbotApiClient {
 
     private const val BASE_URL = "http://10.0.2.2:8000/"
 
-    // This is the "magic" part that adds the token
     private fun createAuthInterceptor(authDataStore: AuthDataStore): Interceptor {
         return Interceptor { chain ->
-            // We use runBlocking here, which is generally not ideal,
-            // but necessary for this synchronous interceptor.
             val token = runBlocking {
                 authDataStore.authToken.first()
             }
@@ -39,12 +39,15 @@ object ChatbotApiClient {
         val authDataStore = AuthDataStore(context)
 
         return OkHttpClient.Builder()
-            .addInterceptor(createAuthInterceptor(authDataStore)) // Add our secure interceptor
+            .addInterceptor(createAuthInterceptor(authDataStore))
             .addInterceptor(logging)
+            // --- ADD LONG TIMEOUTS FOR FILE UPLOADS ---
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
             .build()
     }
 
-    // We need the application context to build this
     private var instance: ChatbotApiService? = null
 
     fun getInstance(context: Context): ChatbotApiService {

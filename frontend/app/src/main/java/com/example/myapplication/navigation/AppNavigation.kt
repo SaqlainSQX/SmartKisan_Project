@@ -19,6 +19,7 @@ import com.example.myapplication.screens.SplashScreen
 import com.example.myapplication.screens.ForgotPasswordScreen
 import com.example.myapplication.screens.ResetPasswordScreen
 import com.example.myapplication.viewmodel.AuthViewModel
+import com.example.myapplication.screens.ProfileScreen
 
 @Composable
 fun AppNavigation() {
@@ -38,6 +39,10 @@ fun AppNavigation() {
         }
         composable("home") {
             HomeScreen(navController = navController, authViewModel = authViewModel)
+        }
+        // --- ADD THIS NEW ROUTE ---
+        composable("profile") {
+            ProfileScreen(navController = navController, authViewModel = authViewModel)
         }
 
         // --- NEW SCREENS ---

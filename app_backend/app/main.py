@@ -6,20 +6,31 @@ from sqlalchemy.orm import Session
 from datetime import timedelta, datetime, timezone
 import random
 import string
+from fastapi.staticfiles import StaticFiles
+import os
 from pydantic import EmailStr # Import EmailStr for validation
 
 # Import all your modules
-from . import crud, models, schemas, auth, database, disease_router, chatbot_router
+from . import crud, models, schemas, auth, database, disease_router, chatbot_router , profile_router
 from .email_service import send_otp_email # Import the new email service
+
 
 # Create all database tables (on startup)
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
 
+# --- MOUNT THE STATIC FOLDER ---
+# This makes the "app/static" folder publicly accessible at the "/static" URL
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+static_path = os.path.join(BASE_DIR, "static")
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+# --- END MOUNT ---
+
 # --- Include all your routers ---
 app.include_router(chatbot_router.router)
 app.include_router(disease_router.router)
+app.include_router(profile_router.router)
 
 # --- Dependency ---
 def get_db():

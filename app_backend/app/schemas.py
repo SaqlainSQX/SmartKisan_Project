@@ -1,10 +1,29 @@
 # G:\SmartKisan_Project\app_backend\app\schemas.py
 from pydantic import BaseModel, EmailStr, constr
 from datetime import datetime
+from typing import Optional
 
 # --- Password Validation ---
 # constr (constrained string)
 PasswordStr = constr(min_length=8)
+
+# --- ADD THESE NEW SCHEMAS for Profile ---
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    contact_number: Optional[str] = None
+
+class UserResponse(BaseModel):
+    id: int
+    email: EmailStr
+    name: Optional[str] = None
+    contact_number: Optional[str] = None
+    profile_photo_url: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
 
 # --- Schemas for User Auth ---
 

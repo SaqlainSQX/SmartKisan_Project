@@ -1,41 +1,38 @@
+// G:\SmartKisan_Project\frontend\app\src\main\java\com\example\myapplication\viewmodel\AuthViewModel.kt
 package com.example.myapplication.viewmodel
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.datastore.AuthDataStore
-import com.example.myapplication.repository.AuthRepository
-// --- ADD THIS IMPORT ---
+import com.example.myapplication.model.UserResponse
 import com.example.myapplication.network.RetrofitClient
-// --- END ADD ---
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.example.myapplication.repository.AuthRepository
+import com.example.myapplication.repository.ProfileRepository
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+// --- Your AuthEvent and ResetState classes ---
 enum class AuthEvent {
     LOGIN_SUCCESS,
     LOGOUT_SUCCESS,
     REGISTER_SUCCESS,
+    REQUEST_OTP_SUCCESS,
     RESET_PASSWORD_SUCCESS
 }
-
 sealed class ResetState {
     data object Idle : ResetState()
     data object Loading : ResetState()
     data class Error(val message: String) : ResetState()
-    data class Success(val message: String) : ResetState()
 }
-
+// --- END ---
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
-    // --- THIS IS THE FIX ---
-    // We now pass the ApiService instance to the repository
-    private val authRepository: AuthRepository = AuthRepository(RetrofitClient.instance)
-    // --- END FIX ---
-    private val authDataStore: AuthDataStore = AuthDataStore(application)
+    private val authRepository = AuthRepository(RetrofitClient.instance)
+    private val authDataStore = AuthDataStore(application)
+    private val profileRepository = ProfileRepository(application)
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -51,6 +48,55 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _resetState = MutableStateFlow<ResetState>(ResetState.Idle)
     val resetState = _resetState.asStateFlow()
 
+    private val _profileState = MutableStateFlow<UserResponse?>(null)
+    val profileState = _profileState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            authToken.collect { token ->
+                if (!token.isNullOrEmpty()) {
+                    loadProfile()
+                }
+            }
+        }
+    }
+
+    fun loadProfile() {
+        viewModelScope.launch {
+            val response = profileRepository.getProfile()
+            if (response.isSuccessful) {
+                _profileState.value = response.body()
+            } else {
+                _error.value = "Could not load profile."
+            }
+        }
+    }
+
+    fun updateProfile(name: String, contact: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val response = profileRepository.updateProfile(name, contact)
+            if (response.isSuccessful) {
+                _profileState.value = response.body()
+            } else {
+                _error.value = "Failed to update profile."
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun updateProfilePhoto(uri: Uri) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val response = profileRepository.updateProfilePhoto(getApplication(), uri)
+            if (response.isSuccessful) {
+                _profileState.value = response.body()
+            } else {
+                _error.value = "Failed to update photo."
+            }
+            _isLoading.value = false
+        }
+    }
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
@@ -60,6 +106,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 val response = authRepository.login(email, password)
                 if (response.isSuccessful && response.body() != null) {
                     authDataStore.saveToken(response.body()!!.accessToken)
+                    loadProfile()
                     _authEvent.emit(AuthEvent.LOGIN_SUCCESS)
                 } else {
                     _error.value = "Login failed: Incorrect email or password"
@@ -73,12 +120,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun register(email: String, password: String) {
-        // Client-side validation
-        if (password.length < 8) {
-            _error.value = "Password must be at least 8 characters"
-            return
-        }
-
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
@@ -87,11 +128,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 if (response.isSuccessful) {
                     _authEvent.emit(AuthEvent.REGISTER_SUCCESS)
                 } else {
-                    val errorBody = response.errorBody()?.string()
-                    val detail = errorBody?.let {
-                        it.split("\"detail\":\"")[1].split("\"")[0]
-                    } ?: "Registration failed"
-                    _error.value = "Registration failed: $detail"
+                    _error.value = "Registration failed: ${response.errorBody()?.string()}"
                 }
             } catch (e: Exception) {
                 _error.value = "Registration failed: ${e.message}"
@@ -104,48 +141,23 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun logout() {
         viewModelScope.launch {
             authDataStore.clearToken()
+            _profileState.value = null // Clear the profile
             _authEvent.emit(AuthEvent.LOGOUT_SUCCESS)
         }
     }
 
-    fun forgotPassword(email: String) {
+    fun requestOtp(email: String) {
         viewModelScope.launch {
             _resetState.value = ResetState.Loading
             try {
                 val response = authRepository.forgotPassword(email)
-                if (response.isSuccessful && response.body() != null) {
-                    _resetState.value = ResetState.Success(response.body()!!.message)
+                if (response.isSuccessful) {
+                    _authEvent.emit(AuthEvent.REQUEST_OTP_SUCCESS)
                 } else {
-                    _resetState.value = ResetState.Error("Failed to send OTP.")
+                    _resetState.value = ResetState.Error(response.errorBody()?.string() ?: "Unknown error")
                 }
             } catch (e: Exception) {
-                _resetState.value = ResetState.Error("Error: ${e.message}")
-            }
-        }
-    }
-
-    fun resetPassword(email: String, otp: String, newPassword: String) {
-        if (newPassword.length < 8) {
-            _resetState.value = ResetState.Error("Password must be at least 8 characters")
-            return
-        }
-
-        viewModelScope.launch {
-            _resetState.value = ResetState.Loading
-            try {
-                val response = authRepository.resetPassword(email, otp, newPassword)
-                if (response.isSuccessful && response.body() != null) {
-                    _resetState.value = ResetState.Success(response.body()!!.message)
-                    _authEvent.emit(AuthEvent.RESET_PASSWORD_SUCCESS)
-                } else {
-                    val errorBody = response.errorBody()?.string()
-                    val detail = errorBody?.let {
-                        it.split("\"detail\":\"")[1].split("\"")[0]
-                    } ?: "Invalid or expired OTP"
-                    _resetState.value = ResetState.Error(detail)
-                }
-            } catch (e: Exception) {
-                _resetState.value = ResetState.Error("Error: ${e.message}")
+                _resetState.value = ResetState.Error(e.message ?: "Network error")
             }
         }
     }
@@ -154,9 +166,26 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         _resetState.value = ResetState.Idle
     }
 
+    // --- THIS IS THE FIX ---
+    // This function was missing
     fun clearError() {
         _error.value = null
     }
+    // --- END FIX ---
+
+    fun resetPassword(email: String, otp: String, newPassword: String) {
+        viewModelScope.launch {
+            _resetState.value = ResetState.Loading
+            try {
+                val response = authRepository.resetPassword(email, otp, newPassword)
+                if (response.isSuccessful) {
+                    _authEvent.emit(AuthEvent.RESET_PASSWORD_SUCCESS)
+                } else {
+                    _resetState.value = ResetState.Error(response.errorBody()?.string() ?: "Invalid OTP or request")
+                }
+            } catch (e: Exception) {
+                _resetState.value = ResetState.Error(e.message ?: "Network error")
+            }
+        }
+    }
 }
-
-

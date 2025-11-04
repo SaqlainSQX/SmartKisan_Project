@@ -1,3 +1,4 @@
+// G:\SmartKisan_Project\frontend\app\src\main\java\com\example\myapplication\screens\ForgotPasswordScreen.kt
 package com.example.myapplication.screens
 
 import android.widget.Toast
@@ -18,12 +19,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp // <-- Added this import
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.myapplication.viewmodel.AuthEvent
 import com.example.myapplication.viewmodel.AuthViewModel
 import com.example.myapplication.viewmodel.ResetState
 import kotlinx.coroutines.flow.collectLatest
-import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,12 +42,14 @@ fun ForgotPasswordScreen(
         authViewModel.clearResetState()
     }
 
-    // Listen for success state to navigate
-    LaunchedEffect(resetState) {
-        if (resetState is ResetState.Success) {
-            Toast.makeText(context, (resetState as ResetState.Success).message, Toast.LENGTH_LONG).show()
-            // Navigate to ResetPasswordScreen, passing the email
-            navController.navigate("reset-password/$email")
+    // --- Listen for success event ---
+    LaunchedEffect(Unit) {
+        authViewModel.authEvent.collectLatest { event ->
+            if (event == AuthEvent.REQUEST_OTP_SUCCESS) {
+                Toast.makeText(context, "OTP sent to your email!", Toast.LENGTH_LONG).show()
+                // Navigate to ResetPasswordScreen
+                navController.navigate("reset-password/$email")
+            }
         }
     }
 
@@ -67,25 +71,22 @@ fun ForgotPasswordScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "Forgot Your Password?",
-                style = MaterialTheme.typography.headlineLarge,
+                "Forgot your password?",
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             Text(
-                "Enter your email and we'll send you an OTP to reset your password.",
+                "No problem! Enter your email below and we will send you an OTP to reset it.",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
-            // --- Email Field ---
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -100,24 +101,23 @@ fun ForgotPasswordScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- Error or Success Message ---
-            when (val state = resetState) {
-                is ResetState.Error -> {
-                    Text(
-                        text = state.message,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
-                else -> {}
+            // --- Check for Error State ---
+            if (resetState is ResetState.Error) {
+                Text(
+                    text = (resetState as ResetState.Error).message,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
             }
 
             // --- Send OTP Button ---
             Button(
                 onClick = {
-                    authViewModel.forgotPassword(email)
+                    authViewModel.requestOtp(email)
                 },
+                // This is the line (around 45) that was fixed.
+                // We only check for the Loading state.
                 enabled = resetState !is ResetState.Loading,
                 modifier = Modifier
                     .fillMaxWidth()
