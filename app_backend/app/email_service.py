@@ -10,12 +10,12 @@ import os
 # set EMAIL_PORT=587
 # set EMAIL_USER=your-email@gmail.com
 # set EMAIL_PASSWORD=your-google-app-password
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
-EMAIL_USER = os.environ.get("EMAIL_USER")
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
+EMAIL_HOST = "smtp.gmail.com" #os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = 587#int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USER = "" #os.environ.get("EMAIL_USER")
+EMAIL_PASSWORD = "" #os.environ.get("EMAIL_PASSWORD")
 
-# --- THIS IS THE FIX ---
+
 # The parameter is now 'email', not 'email_to'
 async def send_otp_email(email: str, otp: str):
 # --- END FIX ---
@@ -78,5 +78,4 @@ async def send_otp_email(email: str, otp: str):
         print(f"Successfully sent OTP to {email}")
     except Exception as e:
         print(f"Error sending email to {email}: {e}")
-        # Re-raise the exception so main.py can catch it
         raise e

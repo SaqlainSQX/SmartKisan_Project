@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# !!! REPLACE WITH YOUR POSTGRESQL DETAILS !!!
+
 # "postgresql://<user>:<password>@<host>:<port>/<dbname>"
 DATABASE_URL = "postgresql://postgres:Saqlain1675@localhost/myapp_db"
 
