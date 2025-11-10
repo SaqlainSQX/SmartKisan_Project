@@ -1,5 +1,5 @@
 # SmartKisan_Project
-# 🌿 Plant Disease Detection & Agri-Assistant
+# Plant Disease Detection & Agri-Assistant
 
 A full-stack mobile application built with **FastAPI (Python)** and **Jetpack Compose (Kotlin)** that uses AI to detect crop diseases and provide comprehensive agricultural support. Users can take or upload a photo of a plant leaf, and the app's backend will identify the disease using a custom-trained model and provide detailed remediation information using the Google Gemini API.
 
@@ -7,19 +7,19 @@ A full-stack mobile application built with **FastAPI (Python)** and **Jetpack Co
 
 ---
 
-## ✨ Features
+## Features
 
-* 📸 **AI Disease Detection:** Upload a leaf photo (or use the camera) to get an instant disease prediction from a custom-trained `.h5` model.
-* 🤖 **Gemini-Enhanced Results:** Prediction results are enhanced by the Google Gemini API to provide detailed causes, descriptions, and treatment solutions.
-* 🌦️ **Real-time Weather:** A dashboard component displays current weather conditions and alerts for the user's location using the OpenWeatherMap API.
-* 🛒 **Marketplace:** A hub for users to buy or sell agricultural products.
-* 👥 **Community Forum:** A place for users to connect, ask questions, and share agricultural advice.
-* 🤖 **Agri-Assistant Chatbot:** An AI-powered chatbot to answer farming-related questions.
-* 🔒 **User Profile & Authentication:** Secure user registration, login, and a profile section. All powered by JWT for secure API access.
+* **AI Disease Detection:** Upload a leaf photo (or use the camera) to get an instant disease prediction from a custom-trained `.h5` model.
+* **Gemini-Enhanced Results:** Prediction results are enhanced by the Google Gemini API to provide detailed causes, descriptions, and treatment solutions.
+* **Real-time Weather:** A dashboard component displays current weather conditions and alerts for the user's location using the OpenWeatherMap API.
+* **Marketplace:** A hub for users to buy or sell agricultural products.
+* **Community Forum:** A place for users to connect, ask questions, and share agricultural advice.
+* **Agri-Assistant Chatbot:** An AI-powered chatbot to answer farming-related questions.
+* **User Profile & Authentication:** Secure user registration, login, and a profile section. All powered by JWT for secure API access.
 
 ---
 
-## 🔁 Project Flow & Data Logic
+## Project Flow & Data Logic
 
 This diagram and description explain the end-to-end flow for the core disease detection feature.
 
@@ -45,7 +45,7 @@ This diagram and description explain the end-to-end flow for the core disease de
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Backend (FastAPI) | Frontend (Android) |
 | :--- | :--- |
@@ -61,7 +61,7 @@ This diagram and description explain the end-to-end flow for the core disease de
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before you begin, ensure you have the following software installed on your local machine:
 
@@ -73,7 +73,7 @@ Before you begin, ensure you have the following software installed on your local
 
 ---
 
-## 🔑 Configuration & Credentials
+## Configuration & Credentials
 
 This project requires several API keys and a database connection. **Never hardcode these values.** Use environment variables for the backend and local constants for the frontend as described below.
 
