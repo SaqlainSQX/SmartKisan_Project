@@ -97,3 +97,62 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 # Google Gemini API
 # Get your key from Google AI Studio
 GEMINI_API_KEY="your_google_gemini_api_key"
+
+## 🚀 Let's Get This Running! (Step-by-Step)
+
+Ready? Follow these two parts.
+
+### Part 1: Get the Backend Running (FastAPI)
+
+1.  **Clone & CD:** Open your terminal, clone the repository, and move into the backend folder.
+    ```bash
+    git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
+    cd your-repo-name/app_backend
+    ```
+
+2.  **Make a Virtual Environment:** Create a self-contained Python environment. (Trust me, this saves so many headaches).
+    ```bash
+    # macOS/Linux
+    python3 -m venv venv
+    source venv/bin/activate
+    
+    # Windows
+    python -m venv venv
+    venv\Scripts\activate
+    ```
+
+3.  **Install Packages:** Use `pip` to install all the libraries listed in `requirements.txt`.
+    ```bash
+    pip install -r requirements.txt
+    ```
+    *(If you don't have a `requirements.txt`, you'll need to `pip install fastapi uvicorn sqlalchemy psycopg2-binary pydantic python-jose passlib bcrypt google-generativeai tensorflow python-multipart`)*
+
+4.  **Check Database:** Make sure your PostgreSQL server is on and you've created the database you listed in your `.env` file.
+
+5.  **Run It!:** Navigate into the inner `app` folder and start the server.
+    ```bash
+    cd app
+    uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ```
+    * `--host 0.0.0.0` is important; it lets your phone connect to your computer's network.
+    * You should see it running at `http://localhost:8000`.
+
+### Part 2: Launch the Android App
+
+1.  **Open in Android Studio:**
+    * Open Android Studio.
+    * Click "Open" and select the `frontend/` folder from where you cloned the project.
+    * Grab a coffee while Gradle syncs and builds everything.
+
+2.  **Check Config:** Did you set the `BASE_URL` and `API_KEY` from the config step? Seriously, double-check. This is the #1 reason it won't work the first time.
+
+3.  **Run:**
+    * Pick your emulator from the dropdown list or plug in your physical phone (with USB debugging enabled).
+    * Hit the big green "Run" button (▶).
+    * The app should build, install, and launch on your device.
+
+4.  **Test It:**
+    * Try creating an account on the Register screen.
+    * Log in with your new account.
+    * See if the weather widget loads on the Home screen.
+    * Go to the "Crop Disease" screen and upload a picture. This is the big test!
